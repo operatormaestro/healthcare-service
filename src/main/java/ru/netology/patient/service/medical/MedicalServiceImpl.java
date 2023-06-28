@@ -11,6 +11,7 @@ public class MedicalServiceImpl implements MedicalService {
 
     private final PatientInfoRepository patientInfoRepository;
     private final SendAlertService alertService;
+    private static final BigDecimal MAX_DEVIATION_TEMPERATURE = new BigDecimal("1.5");
 
     public MedicalServiceImpl(PatientInfoRepository patientInfoRepository, SendAlertService alertService) {
         this.patientInfoRepository = patientInfoRepository;
@@ -29,8 +30,9 @@ public class MedicalServiceImpl implements MedicalService {
     @Override
     public void checkTemperature(String patientId, BigDecimal temperature) {
         PatientInfo patientInfo = getPatientInfo(patientId);
-        if (patientInfo.getHealthInfo().getNormalTemperature().subtract(new BigDecimal("1.5")).compareTo(temperature) > 0) {
-            String message = String.format("Warning, patient with id: %s, need help", patientInfo.getId());System.out.printf("Warning, patient with id: %s, need help", patientInfo.getId());
+        //Переделал логику, поскольку она была ошибочна, в данном варианте проверяется отклонение от нормы на 1.5 градуса в обе стороны, поскольку понижение температуры также опасно для пациента как и повышение.
+        if (patientInfo.getHealthInfo().getNormalTemperature().subtract(temperature).abs().compareTo(MAX_DEVIATION_TEMPERATURE) > 0) {
+            String message = String.format("Warning, patient with id: %s, need help", patientInfo.getId());
             alertService.send(message);
         }
     }
